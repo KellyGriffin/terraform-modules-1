@@ -67,16 +67,12 @@ output "administrator_ssh_private" {
   value = "${var.administrator_ssh_private}"
 }
 
-# DNS
-output "fqdn" {
-  value = "${azurerm_public_ip.frontendloadbalancer_publicip.fqdn}"
+# Rancher
+
+output "rancher_hostname" {
+  value = "${var.rancher_hostname}"
 }
 
-# Let's Encrypt
-output "letsencrypt_email" {
-  value = "${var.letsencrypt_email}"
-}
-
-output "letsencrypt_environment" {
-  value = "${var.letsencrypt_environment}"
+output "trafficmanager_fqdn" {
+  value = "${azurerm_traffic_manager_profile.rke_traffic_manager_profile.fqdn}"
 }

@@ -28,10 +28,16 @@ rke_controlplane_count = "1"
 # Number of etc nodes to be created.
 rke_etcd_count = "1"
 
+# Hostname of the rancher cluster.  This will be used by an Azure Load Balancer to route traffic.
+rancher_hostname = "rancher.example.com"
+
 # DNS Prefix for the Azure Load Balancer
 loadbalancer_dns_label = "rancherexamplecom"
 
-# Let's encrypt settings
-letsencrypt_email = "youraddress@example.com"
+# Cloudflare
+cloudflare_email = "your@example.com"
+cloudflare_token = "apitoken"
 
-letsencrypt_environment = "staging"
+# Let's Encrypt Settings
+letsencrypt_email = "your@example.com"
+letsencrypt_environment = "production"

@@ -67,9 +67,10 @@ output "administrator_ssh_private" {
   value = "${var.administrator_ssh_private}"
 }
 
-# DNS
-output "fqdn" {
-  value = "${azurerm_public_ip.frontendloadbalancer_publicip.fqdn}"
+# Rancher
+
+output "rancher_hostname" {
+  value = "${var.rancher_hostname}"
 }
 
 # Let's Encrypt

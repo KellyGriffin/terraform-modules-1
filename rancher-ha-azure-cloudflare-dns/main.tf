@@ -1,4 +1,3 @@
-################################## PROVIDERS
 # Configure the Azure Provider
 provider "azurerm" {
   subscription_id = "${lookup(var.azure_service_principal, "subscription_id")}"
@@ -6,32 +5,6 @@ provider "azurerm" {
   client_secret   = "${lookup(var.azure_service_principal, "client_secret")}"
   tenant_id       = "${lookup(var.azure_service_principal, "tenant_id")}"
   environment     = "${lookup(var.azure_service_principal, "environment")}"
-}
-
-# Configure the Rancher2 provider
-provider "rancher2" {
-  api_url    = "${var.rancher_api_url}"
-  token_key  = "${var.rancher_api_token}"
-  insecure = true
-}
-
-################################## Rancher
-resource "rancher2_cluster" "manager" {
-  name = "${var.rancher_cluster_name}"
-  description = "Custom Rancher Cluster for the RanchCast example"
-  rke_config {
-    network {
-      plugin = "canal"
-    }
-    cloud_provider {
-      azure_cloud_provider {
-        aad_client_id = "${lookup(var.azure_service_principal, "client_id")}"
-        aad_client_secret = "${lookup(var.azure_service_principal, "client_secret")}"
-        subscription_id = "${lookup(var.azure_service_principal, "subscription_id")}"
-        tenant_id = "${lookup(var.azure_service_principal, "tenant_id")}"
-      }
-    }
-  }
 }
 
 # Create a resource group
@@ -56,10 +29,8 @@ resource "azurerm_subnet" "subnet" {
   address_prefix       = "10.0.1.0/24"
 }
 
-################################ NSGs
-
 # Create the network security group for the workers nodes
-resource "azurerm_network_security_group" "nsg_workers" {
+resource "azurerm_network_security_group" "nsg-workers" {
   name                = "${azurerm_resource_group.resourcegroup.name}-nsg-workers"
   location            = "${azurerm_resource_group.resourcegroup.location}"
   resource_group_name = "${azurerm_resource_group.resourcegroup.name}"
@@ -144,7 +115,7 @@ resource "azurerm_network_security_group" "nsg_workers" {
 }
 
 # Create the network security group for the control plane nodes
-resource "azurerm_network_security_group" "nsg_controlplane" {
+resource "azurerm_network_security_group" "nsg-controlplane" {
   name                = "${azurerm_resource_group.resourcegroup.name}-nsg-controlplane"
   location            = "${azurerm_resource_group.resourcegroup.location}"
   resource_group_name = "${azurerm_resource_group.resourcegroup.name}"
@@ -268,7 +239,7 @@ resource "azurerm_network_security_group" "nsg_controlplane" {
 }
 
 # Create the network security group for the etcd nodes
-resource "azurerm_network_security_group" "nsg_etcd" {
+resource "azurerm_network_security_group" "nsg-etcd" {
   name                = "${azurerm_resource_group.resourcegroup.name}-nsg-etcd"
   location            = "${azurerm_resource_group.resourcegroup.location}"
   resource_group_name = "${azurerm_resource_group.resourcegroup.name}"
@@ -391,187 +362,36 @@ resource "azurerm_network_security_group" "nsg_etcd" {
   }
 }
 
-# Create the network security group for the windows worker nodes
-resource "azurerm_network_security_group" "nsg_windows_workers" {
-  name                = "${azurerm_resource_group.resourcegroup.name}-nsg-windows-workers"
-  location            = "${azurerm_resource_group.resourcegroup.location}"
-  resource_group_name = "${azurerm_resource_group.resourcegroup.name}"
-
-  security_rule {
-    name                       = "RDP"
-    description                = "Inboound-RDP"
-    priority                   = 998
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "3389"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "WinRM-HTTP"
-    description                = "Inboound Windows Remote Management HTTP"
-    priority                   = 999
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "5985"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "WinRM-HTTPS"
-    description                = "Inboound Windows Remote Management HTTPS"
-    priority                   = 1000
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "5986"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "SSH"
-    description                = "Inbound SSH Traffic"
-    priority                   = 1001
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "22"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "Canal-80"
-    description                = "Inbound Canal Traffic"
-    priority                   = 1002
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "80"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "Canal-443"
-    description                = "Inbound Secure Canal Traffic"
-    priority                   = 1003
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "443"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "KubeletAPI"
-    description                = "Inbound Kubelet API"
-    priority                   = 1004
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "10250"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "kubeproxy"
-    description                = "Inbound kubeproxy"
-    priority                   = 1005
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "10256"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-
-  security_rule {
-    name                       = "NodePort-Services"
-    description                = "Inbound services"
-    priority                   = 1006
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "30000-32767"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-}
-
-############################## PUBLIC IPS
-
-resource "azurerm_public_ip" "windows_worker_publicip" {
-  count                        = "${var.windows_count}"
-  name                         = "windows-worker-publicIp-${count.index}"
-  location                     = "${azurerm_resource_group.resourcegroup.location}"
-  resource_group_name          = "${azurerm_resource_group.resourcegroup.name}"
-  allocation_method = "Static"
-}
-
 resource "azurerm_public_ip" "worker_publicip" {
-  count                        = "${var.worker_count}"
+  count                        = "${var.rke_worker_count}"
   name                         = "worker-publicIp-${count.index}"
   location                     = "${azurerm_resource_group.resourcegroup.location}"
   resource_group_name          = "${azurerm_resource_group.resourcegroup.name}"
-  allocation_method = "Static"
+  allocation_method = "Dynamic"
 }
 
 resource "azurerm_public_ip" "controlplane_publicip" {
-  count                        = "${var.controlplane_count}"
+  count                        = "${var.rke_controlplane_count}"
   name                         = "controlplane-publicIp-${count.index}"
   location                     = "${azurerm_resource_group.resourcegroup.location}"
   resource_group_name          = "${azurerm_resource_group.resourcegroup.name}"
-  allocation_method = "Static"
+  allocation_method = "Dynamic"
 }
 
 resource "azurerm_public_ip" "etcd_publicip" {
-  count                        = "${var.etcd_count}"
+  count                        = "${var.rke_etcd_count}"
   name                         = "etcd-publicIp-${count.index}"
   location                     = "${azurerm_resource_group.resourcegroup.location}"
   resource_group_name          = "${azurerm_resource_group.resourcegroup.name}"
-  allocation_method = "Static"
-}
-
-###################################### NICs
-
-resource "azurerm_network_interface" "windows_worker_nic" {
-  count                     = "${var.windows_count}"
-  name                      = "windows-worker-nic-${count.index}"
-  location                  = "${azurerm_resource_group.resourcegroup.location}"
-  resource_group_name       = "${azurerm_resource_group.resourcegroup.name}"
-  network_security_group_id = "${azurerm_network_security_group.nsg_windows_workers.id}"
-
-  ip_configuration {
-    name                          = "windows-worker-ip-configuration-${count.index}"
-    subnet_id                     = "${azurerm_subnet.subnet.id}"
-    public_ip_address_id          = "${element(azurerm_public_ip.windows_worker_publicip.*.id, count.index)}"
-    private_ip_address_allocation = "dynamic"
-  }
+  allocation_method = "Dynamic"
 }
 
 resource "azurerm_network_interface" "worker_nic" {
-  count                     = "${var.worker_count}"
+  count                     = "${var.rke_worker_count}"
   name                      = "worker-nic-${count.index}"
   location                  = "${azurerm_resource_group.resourcegroup.location}"
   resource_group_name       = "${azurerm_resource_group.resourcegroup.name}"
-  network_security_group_id = "${azurerm_network_security_group.nsg_workers.id}"
+  network_security_group_id = "${azurerm_network_security_group.nsg-workers.id}"
 
   ip_configuration {
     name                          = "worker-ip-configuration-${count.index}"
@@ -582,11 +402,11 @@ resource "azurerm_network_interface" "worker_nic" {
 }
 
 resource "azurerm_network_interface" "controlplane_nic" {
-  count                     = "${var.controlplane_count}"
+  count                     = "${var.rke_controlplane_count}"
   name                      = "controlplane-nic-${count.index}"
   location                  = "${azurerm_resource_group.resourcegroup.location}"
   resource_group_name       = "${azurerm_resource_group.resourcegroup.name}"
-  network_security_group_id = "${azurerm_network_security_group.nsg_controlplane.id}"
+  network_security_group_id = "${azurerm_network_security_group.nsg-controlplane.id}"
 
   ip_configuration {
     name                          = "controlplane-ip-configuration-${count.index}"
@@ -597,11 +417,11 @@ resource "azurerm_network_interface" "controlplane_nic" {
 }
 
 resource "azurerm_network_interface" "etcd_nic" {
-  count                     = "${var.etcd_count}"
+  count                     = "${var.rke_etcd_count}"
   name                      = "etcd-nic-${count.index}"
   location                  = "${azurerm_resource_group.resourcegroup.location}"
   resource_group_name       = "${azurerm_resource_group.resourcegroup.name}"
-  network_security_group_id = "${azurerm_network_security_group.nsg_etcd.id}"
+  network_security_group_id = "${azurerm_network_security_group.nsg-etcd.id}"
 
   ip_configuration {
     name                          = "etcd-ip-configuration-${count.index}"
@@ -611,20 +431,8 @@ resource "azurerm_network_interface" "etcd_nic" {
   }
 }
 
-##################################### Disks
-
-resource "azurerm_managed_disk" "windows_worker_disk" {
-  count                = "${var.windows_count}"
-  name                 = "windows-worker-data-disk-${count.index}"
-  location             = "${azurerm_resource_group.resourcegroup.location}"
-  resource_group_name  = "${azurerm_resource_group.resourcegroup.name}"
-  storage_account_type = "Standard_LRS"
-  create_option        = "Empty"
-  disk_size_gb         = "1023"
-}
-
-resource "azurerm_managed_disk" "worker_disk" {
-  count                = "${var.worker_count}"
+resource "azurerm_managed_disk" "worker-disk" {
+  count                = "${var.rke_worker_count}"
   name                 = "worker-data-disk-${count.index}"
   location             = "${azurerm_resource_group.resourcegroup.location}"
   resource_group_name  = "${azurerm_resource_group.resourcegroup.name}"
@@ -633,8 +441,8 @@ resource "azurerm_managed_disk" "worker_disk" {
   disk_size_gb         = "1023"
 }
 
-resource "azurerm_managed_disk" "controlplane_disk" {
-  count                = "${var.controlplane_count}"
+resource "azurerm_managed_disk" "controlplane-disk" {
+  count                = "${var.rke_controlplane_count}"
   name                 = "controlplane-data-disk-${count.index}"
   location             = "${azurerm_resource_group.resourcegroup.location}"
   resource_group_name  = "${azurerm_resource_group.resourcegroup.name}"
@@ -643,8 +451,8 @@ resource "azurerm_managed_disk" "controlplane_disk" {
   disk_size_gb         = "1023"
 }
 
-resource "azurerm_managed_disk" "etcd_disk" {
-  count                = "${var.etcd_count}"
+resource "azurerm_managed_disk" "etcd-disk" {
+  count                = "${var.rke_etcd_count}"
   name                 = "etcd-data-disk-${count.index}"
   location             = "${azurerm_resource_group.resourcegroup.location}"
   resource_group_name  = "${azurerm_resource_group.resourcegroup.name}"
@@ -653,90 +461,77 @@ resource "azurerm_managed_disk" "etcd_disk" {
   disk_size_gb         = "1023"
 }
 
-###################################### VMs
-
-resource "azurerm_virtual_machine" "windows_worker_machine" {
-  count                            = "${var.windows_count}"
-  name                             = "windows-worker-${count.index}"
-  location                         = "${azurerm_resource_group.resourcegroup.location}"
-  resource_group_name              = "${azurerm_resource_group.resourcegroup.name}"
-  network_interface_ids            = ["${element(azurerm_network_interface.windows_worker_nic.*.id, count.index)}"]
-  vm_size                          = "${var.windows_node_vm_size}"
-  delete_os_disk_on_termination    = true
-  delete_data_disks_on_termination = true
-
-
-  storage_image_reference {
-    publisher = "${lookup(var.windows_node_image, "publisher")}"
-    offer     = "${lookup(var.windows_node_image, "offer")}"
-    sku       = "${lookup(var.windows_node_image, "sku")}"
-    version   = "${lookup(var.windows_node_image, "version")}"
+# Create a Front-End Load Balancer
+  resource "azurerm_public_ip" "frontendloadbalancer_publicip" {
+    name                         = "rke-lb-publicip"
+    location                     = "${azurerm_resource_group.resourcegroup.location}"
+    resource_group_name          = "${azurerm_resource_group.resourcegroup.name}"
+    allocation_method = "Static"
+    domain_name_label = "${var.loadbalancer_dns_label}"
   }
 
-  storage_os_disk {
-    name              = "windows-worker-os-disk-${count.index}"
-    caching           = "ReadWrite"
-    create_option     = "FromImage"
-    managed_disk_type = "Standard_LRS"
-  }
+  resource "azurerm_lb" "frontendloadbalancer" {
+    name                = "rke-lb"
+    location            = "${azurerm_resource_group.resourcegroup.location}"
+    resource_group_name = "${azurerm_resource_group.resourcegroup.name}"
 
-  storage_data_disk {
-    name            = "${element(azurerm_managed_disk.windows_worker_disk.*.name, count.index)}"
-    managed_disk_id = "${element(azurerm_managed_disk.windows_worker_disk.*.id, count.index)}"
-    create_option   = "Attach"
-    lun             = 1
-    disk_size_gb    = "${element(azurerm_managed_disk.windows_worker_disk.*.disk_size_gb, count.index)}"
-  }
-
-  os_profile {
-    computer_name  = "windows-${count.index}"
-    admin_username = "${var.administrator_username}"
-    admin_password = "${var.administrator_password}"
-    custom_data    = "${file("./azure-boot/winrm.ps1")}"
-  }
-
-  os_profile_windows_config {
-    provision_vm_agent = true
-    winrm = {
-      protocol = "http"
-    }
-
-    # Auto-Login's required to configure WinRM
-    additional_unattend_config {
-      pass         = "oobeSystem"
-      component    = "Microsoft-Windows-Shell-Setup"
-      setting_name = "AutoLogon"
-      content      = "<AutoLogon><Password><Value>${var.administrator_password}</Value></Password><Enabled>true</Enabled><LogonCount>1</LogonCount><Username>${var.administrator_username}</Username></AutoLogon>"
-    }
-
-    # Unattend config is to enable basic auth in WinRM, required for the provisioner stage.
-    additional_unattend_config {
-      pass         = "oobeSystem"
-      component    = "Microsoft-Windows-Shell-Setup"
-      setting_name = "FirstLogonCommands"
-      content      = "${file("./azure-boot/FirstLogonCommands.xml")}"
+    frontend_ip_configuration {
+      name                 = "rke-lb-frontend"
+      public_ip_address_id = "${azurerm_public_ip.frontendloadbalancer_publicip.id}"
     }
   }
 
-
-  provisioner "remote-exec" {
-    inline = [
-      "${replace(rancher2_cluster.manager.cluster_registration_token.0.windows_node_command, "--isolation=hyperv", "")}"
-    ]
-
-    connection {
-      type     = "winrm"
-      port     = 5985
-      https    = false
-      timeout  = "15m"
-      user     = "${var.administrator_username}"
-      password = "${var.administrator_password}"
-    }
+  resource "azurerm_lb_backend_address_pool" "frontendloadbalancer_backendpool" {
+    resource_group_name = "${azurerm_resource_group.resourcegroup.name}"
+    loadbalancer_id     = "${azurerm_lb.frontendloadbalancer.id}"
+    name                = "rke-lb-backend"
   }
-} 
 
-resource "azurerm_virtual_machine" "worker_machine" {
-  count                            = "${var.worker_count}"
+  resource "azurerm_network_interface_backend_address_pool_association" "worker_address_pool_association" {
+    count                = "${var.rke_worker_count}"
+    network_interface_id    = "${element(azurerm_network_interface.worker_nic.*.id, count.index)}"
+    ip_configuration_name   = "worker-ip-configuration-${count.index}"
+    backend_address_pool_id = "${azurerm_lb_backend_address_pool.frontendloadbalancer_backendpool.id}"
+  }
+
+  resource "azurerm_lb_nat_rule" "loadbalancer_nat_http_rule" {
+    resource_group_name            = "${azurerm_resource_group.resourcegroup.name}"
+    loadbalancer_id                = "${azurerm_lb.frontendloadbalancer.id}"
+    name                           = "httpAccess"
+    protocol                       = "Tcp"
+    frontend_port                  = 80
+    backend_port                   = 80
+    frontend_ip_configuration_name = "rke-lb-frontend"
+  }
+
+  resource "azurerm_network_interface_nat_rule_association" "worker_nat_association_http" {
+    count                 = "${var.rke_worker_count}"
+    network_interface_id  = "${element(azurerm_network_interface.worker_nic.*.id, count.index)}"
+    ip_configuration_name = "worker-ip-configuration-${count.index}"
+    nat_rule_id           = "${azurerm_lb_nat_rule.loadbalancer_nat_http_rule.id}"
+  }
+
+  resource "azurerm_lb_nat_rule" "loadbalancer_nat_https_rule" {
+    resource_group_name            = "${azurerm_resource_group.resourcegroup.name}"
+    loadbalancer_id                = "${azurerm_lb.frontendloadbalancer.id}"
+    name                           = "httpsAccess"
+    protocol                       = "Tcp"
+    frontend_port                  = 443
+    backend_port                   = 443
+    frontend_ip_configuration_name = "rke-lb-frontend"
+  }
+
+resource "azurerm_network_interface_nat_rule_association" "worker_nat_association_https" {
+    count                 = "${var.rke_worker_count}"
+    network_interface_id  = "${element(azurerm_network_interface.worker_nic.*.id, count.index)}"
+    ip_configuration_name = "worker-ip-configuration-${count.index}"
+    nat_rule_id           = "${azurerm_lb_nat_rule.loadbalancer_nat_https_rule.id}"
+  }
+
+
+
+resource "azurerm_virtual_machine" "worker-machine" {
+  count                            = "${var.rke_worker_count}"
   name                             = "worker-${count.index}"
   location                         = "${azurerm_resource_group.resourcegroup.location}"
   resource_group_name              = "${azurerm_resource_group.resourcegroup.name}"
@@ -746,10 +541,10 @@ resource "azurerm_virtual_machine" "worker_machine" {
   delete_data_disks_on_termination = true
 
   storage_image_reference {
-    publisher = "${lookup(var.linux_node_image, "publisher")}"
-    offer     = "${lookup(var.linux_node_image, "offer")}"
-    sku       = "${lookup(var.linux_node_image, "sku")}"
-    version   = "${lookup(var.linux_node_image, "version")}"
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "16.04-LTS"
+    version   = "latest"
   }
 
   storage_os_disk {
@@ -760,11 +555,11 @@ resource "azurerm_virtual_machine" "worker_machine" {
   }
 
   storage_data_disk {
-    name            = "${element(azurerm_managed_disk.worker_disk.*.name, count.index)}"
-    managed_disk_id = "${element(azurerm_managed_disk.worker_disk.*.id, count.index)}"
+    name            = "${element(azurerm_managed_disk.worker-disk.*.name, count.index)}"
+    managed_disk_id = "${element(azurerm_managed_disk.worker-disk.*.id, count.index)}"
     create_option   = "Attach"
     lun             = 1
-    disk_size_gb    = "${element(azurerm_managed_disk.worker_disk.*.disk_size_gb, count.index)}"
+    disk_size_gb    = "${element(azurerm_managed_disk.worker-disk.*.disk_size_gb, count.index)}"
   }
 
   os_profile {
@@ -783,20 +578,19 @@ resource "azurerm_virtual_machine" "worker_machine" {
 
   provisioner "remote-exec" {
     inline = [
-      "curl https://releases.rancher.com/install-docker/18.09.sh | sh && sudo usermod -a -G docker  ${var.administrator_username}",
-      "${rancher2_cluster.manager.cluster_registration_token.0.node_command} --worker"
+      "curl https://releases.rancher.com/install-docker/${var.docker_version}.sh | sh && sudo usermod -a -G docker  ${var.administrator_username}",
     ]
 
     connection {
       type     = "ssh"
       user     = "${var.administrator_username}"
-      private_key = "${file("${var.administrator_ssh_keypath}")}"
+      private_key = "${file("${var.administrator_ssh_private}")}"
     }
   }
 }
 
-resource "azurerm_virtual_machine" "controlplane_machine" {
-  count                            = "${var.controlplane_count}"
+resource "azurerm_virtual_machine" "controlplane-machine" {
+  count                            = "${var.rke_controlplane_count}"
   name                             = "controlplane-${count.index}"
   location                         = "${azurerm_resource_group.resourcegroup.location}"
   resource_group_name              = "${azurerm_resource_group.resourcegroup.name}"
@@ -806,10 +600,10 @@ resource "azurerm_virtual_machine" "controlplane_machine" {
   delete_data_disks_on_termination = true
 
   storage_image_reference {
-    publisher = "${lookup(var.linux_node_image, "publisher")}"
-    offer     = "${lookup(var.linux_node_image, "offer")}"
-    sku       = "${lookup(var.linux_node_image, "sku")}"
-    version   = "${lookup(var.linux_node_image, "version")}"
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "16.04-LTS"
+    version   = "latest"
   }
 
   storage_os_disk {
@@ -820,11 +614,11 @@ resource "azurerm_virtual_machine" "controlplane_machine" {
   }
 
   storage_data_disk {
-    name            = "${element(azurerm_managed_disk.controlplane_disk.*.name, count.index)}"
-    managed_disk_id = "${element(azurerm_managed_disk.controlplane_disk.*.id, count.index)}"
+    name            = "${element(azurerm_managed_disk.controlplane-disk.*.name, count.index)}"
+    managed_disk_id = "${element(azurerm_managed_disk.controlplane-disk.*.id, count.index)}"
     create_option   = "Attach"
     lun             = 1
-    disk_size_gb    = "${element(azurerm_managed_disk.controlplane_disk.*.disk_size_gb, count.index)}"
+    disk_size_gb    = "${element(azurerm_managed_disk.controlplane-disk.*.disk_size_gb, count.index)}"
   }
 
   os_profile {
@@ -843,20 +637,19 @@ resource "azurerm_virtual_machine" "controlplane_machine" {
 
   provisioner "remote-exec" {
     inline = [
-      "curl https://releases.rancher.com/install-docker/18.09.sh | sh && sudo usermod -a -G docker  ${var.administrator_username}",
-      "${rancher2_cluster.manager.cluster_registration_token.0.node_command} --controlplane"
+      "curl https://releases.rancher.com/install-docker/${var.docker_version}.sh | sh && sudo usermod -a -G docker  ${var.administrator_username}",
     ]
 
     connection {
       type     = "ssh"
       user     = "${var.administrator_username}"
-      private_key = "${file("${var.administrator_ssh_keypath}")}"
+      private_key = "${file("${var.administrator_ssh_private}")}"
     }
   }
 }
 
-resource "azurerm_virtual_machine" "etcd_machine" {
-  count                            = "${var.etcd_count}"
+resource "azurerm_virtual_machine" "etcd-machine" {
+  count                            = "${var.rke_etcd_count}"
   name                             = "etcd-${count.index}"
   location                         = "${azurerm_resource_group.resourcegroup.location}"
   resource_group_name              = "${azurerm_resource_group.resourcegroup.name}"
@@ -866,10 +659,10 @@ resource "azurerm_virtual_machine" "etcd_machine" {
   delete_data_disks_on_termination = true
 
   storage_image_reference {
-    publisher = "${lookup(var.linux_node_image, "publisher")}"
-    offer     = "${lookup(var.linux_node_image, "offer")}"
-    sku       = "${lookup(var.linux_node_image, "sku")}"
-    version   = "${lookup(var.linux_node_image, "version")}"
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "16.04-LTS"
+    version   = "latest"
   }
 
   storage_os_disk {
@@ -880,11 +673,11 @@ resource "azurerm_virtual_machine" "etcd_machine" {
   }
 
   storage_data_disk {
-    name            = "${element(azurerm_managed_disk.etcd_disk.*.name, count.index)}"
-    managed_disk_id = "${element(azurerm_managed_disk.etcd_disk.*.id, count.index)}"
+    name            = "${element(azurerm_managed_disk.etcd-disk.*.name, count.index)}"
+    managed_disk_id = "${element(azurerm_managed_disk.etcd-disk.*.id, count.index)}"
     create_option   = "Attach"
     lun             = 1
-    disk_size_gb    = "${element(azurerm_managed_disk.etcd_disk.*.disk_size_gb, count.index)}"
+    disk_size_gb    = "${element(azurerm_managed_disk.etcd-disk.*.disk_size_gb, count.index)}"
   }
 
   os_profile {
@@ -903,14 +696,30 @@ resource "azurerm_virtual_machine" "etcd_machine" {
 
   provisioner "remote-exec" {
     inline = [
-      "curl https://releases.rancher.com/install-docker/18.09.sh | sh && sudo usermod -a -G docker  ${var.administrator_username}",
-      "${rancher2_cluster.manager.cluster_registration_token.0.node_command} --etcd"
+      "curl https://releases.rancher.com/install-docker/${var.docker_version}.sh | sh && sudo usermod -a -G docker  ${var.administrator_username}",
     ]
 
     connection {
       type     = "ssh"
       user     = "${var.administrator_username}"
-      private_key = "${file("${var.administrator_ssh_keypath}")}"
+      private_key = "${file("${var.administrator_ssh_private}")}"
     }
   }
+}
+
+# Cloudflare 
+
+provider "cloudflare" {
+  email = "${var.cloudflare_email}"
+  token = "${var.cloudflare_token}"
+}
+
+# Add a record to the domain
+resource "cloudflare_record" "domain" {
+  domain = "${var.rancher_hostname}"
+  name   = "${var.rancher_hostname}"
+  value  = "${azurerm_public_ip.frontendloadbalancer_publicip.ip_address}"
+  type   = "A"
+  ttl    = "1"
+  proxied = "true"
 }

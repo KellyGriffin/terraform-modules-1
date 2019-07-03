@@ -1,4 +1,8 @@
 #!/bin/bash
+# Variables
+email=jason@vanbrackel.net
+environment=staging
+
 # Remove pre-existing state
 rm terraform.tfstate
 rm terraform.tfstate.backup
@@ -10,16 +14,16 @@ terraform apply -auto-approve
 terraform apply -auto-approve # Seems to be an issue with the azure provider where publicips aren't there.  Will research later.
 terraform output -json > output.json
 
-# Grab variables
+# Grab ssh variables
 admin=$(cat output.json | jq '.admin.value' | sed 's/\"//g')
 private_key_path=$(cat output.json | jq '.administrator_ssh_private.value' | sed 's/\"//g')
 private_key_path2=$(echo $private_key_path | sed 's/\//\\\//g')
 rke_version=$(cat output.json | jq '.rke_version.value' | sed 's/\"//g')
 helm_version=$(cat output.json | jq '.helm_version.value' | sed 's/\"//g')
 resource_group_name=$(cat output.json | jq '.resource_group.value' | sed 's/\"//g')
-rancher_hostname=$(cat output.json | jq '.fqdn.value' | sed 's/\"//g')
-email=$(cat output.json | jq '.letsencrypt_email.value' | sed 's/\"//g')
-environment=$(cat output.json | jq '.letsencrypt_environment.value' | sed 's/\"//g')
+
+# Grab rancher variables
+rancher_hostname=$(cat output.json | jq '.rancher_hostname.value' | sed 's/\"//g')
 
 #Remove any existing Service Principal with the same name
 az ad app delete --id http://$rancher_hostname
@@ -145,7 +149,6 @@ helm install stable/cert-manager \
   --kubeconfig "$config_path" \
   --kube-context local \
   --wait
-
 
 # Install Rancher
 helm install rancher-stable/rancher \

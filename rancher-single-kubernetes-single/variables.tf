@@ -20,7 +20,7 @@ variable "azure_resource_group" {
   type        = "string"
   description = "Name of the Azure Resource Group to be created for the network."
 
-  default = "rancher-group"
+  default = "rancher-single-group"
 }
 
 variable "administrator_username" {
@@ -44,44 +44,18 @@ variable "administrator_ssh_keypath" {
 }
 
 
-variable "controlplane_node_vm_size" {
+variable "rancher_node_vm_size" {
   type        = "string"
   description = "Azure VM size of the control plane nodes"
 
-  default = "Standard_D2_v3"
+  default = "Standard_DS2_v2"
 }
 
-variable "etcd_node_vm_size" {
+variable "kubernetes_node_vm_size" {
   type        = "string"
   description = "Azure VM size of the etcd nodes"
 
-  default = "Standard_D2_v3"
-}
-
-variable "worker_node_vm_size" {
-  type        = "string"
-  description = "Azure VM size of the etcd nodes"
-
-  default = "Standard_D2_v3"
-}
-
-variable "windows_node_vm_size" {
-  type        = "string"
-  description = "Azure VM size of the windows worker nodes"
-
-  default = "Standard_D4_v3"
-}
-
-variable "windows_node_image" {
-  type = "map"
-  description = "Image information for Windows Server nodes"
-
-  default = {
-    publisher = "MicrosoftWindowsServer"
-    offer     = "WindowsServerSemiAnnual"
-    sku       = "Datacenter-Core-1809-with-Containers-smalldisk"
-    version   = "latest"
-  }
+  default = "Standard_DS2_v2"
 }
 
 variable "linux_node_image" {
@@ -111,32 +85,4 @@ variable "rancher_api_token" {
 variable "rancher_cluster_name" {
   type = "string"
   description = "Name of the rancher cluster that's being created"
-}
-
-
-variable "controlplane_count" {
-  type = "string"
-  description = "Desired quantity of control plane nodes"
-
-  default = 1
-}
-
-variable "etcd_count" {
-  type = "string"
-  description = "Desired quantity of etcd nodes"
-
-  default = 1
-}
-variable "worker_count" {
-  type = "string"
-  description = "Desired quantity of Linux worker nodes"
-
-  default = 1
-}
-
-variable "windows_count" {
-  type = "string"
-  description = "Desired quantity of Windows worker nodes"
-
-  default = 1
 }

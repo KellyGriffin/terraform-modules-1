@@ -113,19 +113,38 @@ variable "administrator_ssh_private" {
   type        = "string"
   description = "The path to the SSH Private Key file."
 }
+
+# Rancher 
+variable "rancher_hostname" {
+  type = "string"
+  description = "Resolvable DNS Name or IP Address of the Rancher Server"
+}
+
+
 variable "loadbalancer_dns_label" {
   type = "string"
   description = "DNS hostname label used to create a fqdn for the frontendloadbalancer"
 }
 
+# Cloudflare DNS
+
+variable "cloudflare_email" {
+  type = "string"
+  description = "email address for your cloudflare account"
+}
+
+variable "cloudflare_token" {
+  type = "string"
+  description = "cloudflare api token"
+}
+
+# Let's Encrypt
 variable "letsencrypt_email" {
   type = "string"
-  description = "e-mail address for let's encrypt"
+  description = "Let's Encrypt E-mail"
 }
 
 variable "letsencrypt_environment" {
   type = "string"
-  description = "Environment type for let's encrypt"
-  default = "staging"
+  description = "Let's Encrypt Environment"
 }
-

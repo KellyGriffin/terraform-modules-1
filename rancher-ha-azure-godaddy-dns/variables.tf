@@ -113,19 +113,35 @@ variable "administrator_ssh_private" {
   type        = "string"
   description = "The path to the SSH Private Key file."
 }
+
+# Rancher 
+variable "rancher_hostname" {
+  type = "string"
+  description = "Resolvable DNS Name or IP Address of the Rancher Server"
+}
+
+variable "rancher_subdomain" {
+  type = "string"
+  description = "Sudomain if you're using your own DNS"
+}
+
+
 variable "loadbalancer_dns_label" {
   type = "string"
   description = "DNS hostname label used to create a fqdn for the frontendloadbalancer"
 }
 
-variable "letsencrypt_email" {
-  type = "string"
-  description = "e-mail address for let's encrypt"
-}
 
-variable "letsencrypt_environment" {
+#Go Daddy (Optional)
+variable "godaddy_key" {
   type = "string"
-  description = "Environment type for let's encrypt"
-  default = "staging"
+  description = "Go Daddy API Key"
 }
-
+variable "godaddy_secret" {
+  type = "string"
+  description = "Go Daddy API Secret"
+}
+variable "godaddy_domain" {
+  type = "string"
+  description = "Go Daddy domain to modify"
+}

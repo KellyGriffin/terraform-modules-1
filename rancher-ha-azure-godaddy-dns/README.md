@@ -3,6 +3,8 @@
 This module can be used to standup a Rancher cluster on Azure IaaS, not Azure Kubernetes Service (AKS)).  This would be a scenario where you wanted fine grained control of Kubernetes Cluster, or features that are not available from AKS.
 
 ## Prerequisites
+This example uses a GoDaddy Host.  Feel free to remove that or integrate with your own DNS provider.  For the GoDaddy Terraform initialization see https://github.com/n3integration/terraform-godaddy
+
 * You must use Terraform 0.11.x.  There are a number of issues in 0.12 and some syntax changes that cause this to fail *
 
 ### Azure AD Service Principal
@@ -39,3 +41,4 @@ Setup variables file
 - Installs tiller and configured tiller RBAC.
 - Installs Rancher.
 - Installs cert-manager.
+- Sets up GoDaddy CNAME to redirect to Azure's DNS

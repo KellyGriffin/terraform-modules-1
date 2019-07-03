@@ -28,10 +28,16 @@ rke_controlplane_count = "1"
 # Number of etc nodes to be created.
 rke_etcd_count = "1"
 
+# Hostname of the rancher cluster.  This will be used by an Azure Load Balancer to route traffic.
+rancher_hostname = "rancher.example.com"
+
+# Subdomain of the rancher cluster, this is used to configure Go Daddy
+rancher_subdomain = "rancher"
+
 # DNS Prefix for the Azure Load Balancer
 loadbalancer_dns_label = "rancherexamplecom"
 
-# Let's encrypt settings
-letsencrypt_email = "youraddress@example.com"
-
-letsencrypt_environment = "staging"
+#Go Daddy
+godaddy_key = "key"
+godaddy_secret = "password"
+godaddy_domain = "example.com"

@@ -10,16 +10,22 @@ terraform apply -auto-approve
 terraform apply -auto-approve # Seems to be an issue with the azure provider where publicips aren't there.  Will research later.
 terraform output -json > output.json
 
-# Grab variables
+# Grab ssh variables
 admin=$(cat output.json | jq '.admin.value' | sed 's/\"//g')
 private_key_path=$(cat output.json | jq '.administrator_ssh_private.value' | sed 's/\"//g')
 private_key_path2=$(echo $private_key_path | sed 's/\//\\\//g')
+
+# Grab software variable
 rke_version=$(cat output.json | jq '.rke_version.value' | sed 's/\"//g')
 helm_version=$(cat output.json | jq '.helm_version.value' | sed 's/\"//g')
 resource_group_name=$(cat output.json | jq '.resource_group.value' | sed 's/\"//g')
-rancher_hostname=$(cat output.json | jq '.fqdn.value' | sed 's/\"//g')
+
+# Grab let's encrypt variables
 email=$(cat output.json | jq '.letsencrypt_email.value' | sed 's/\"//g')
 environment=$(cat output.json | jq '.letsencrypt_environment.value' | sed 's/\"//g')
+
+# Grab rancher variables
+rancher_hostname=$(cat output.json | jq '.rancher_hostname.value' | sed 's/\"//g')
 
 #Remove any existing Service Principal with the same name
 az ad app delete --id http://$rancher_hostname
@@ -137,7 +143,7 @@ helm init --service-account tiller --kube-context local --kubeconfig "$config_pa
 # Install Rancher
 helm repo add rancher-stable https://releases.rancher.com/server-charts/stable
 
-# Optional: Install Cert-Manager if you're using self-signed certificates or Let's Encrypt certificates.
+# Install Cert-Manager if you're using self-signed certificates or Let's Encrypt certificates.
 helm install stable/cert-manager \
   --name cert-manager \
   --namespace kube-system \
@@ -145,7 +151,6 @@ helm install stable/cert-manager \
   --kubeconfig "$config_path" \
   --kube-context local \
   --wait
-
 
 # Install Rancher
 helm install rancher-stable/rancher \
@@ -160,4 +165,3 @@ helm install rancher-stable/rancher \
   --set auditLog.level="1" \
   --set addLocal="true" \
   --wait
-  
